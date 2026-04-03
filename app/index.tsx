@@ -1,61 +1,79 @@
 import { StatusBar } from "expo-status-bar";
 import { useState } from "react";
-import {
-  Button,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
+import NameInput from "./components/NameInput";
+import NameItems from "./components/NameItems";
+
+type NameItem = {
+  id: string;
+  name: string;
+};
 
 export default function Index() {
   const [name, setName] = useState("");
-  const [namesList, setNamesList] = useState<string[]>([]);
+  const [namesList, setNamesList] = useState<NameItem[]>([]);
 
   function handleInputChange(enteredText: string): void {
     setName(enteredText);
   }
-  function handleAddName(): void {
-    console.log("Adding:", name);
 
+  function handleAddName(): void {
     if (!name.trim()) return;
 
-    setNamesList((prevNames) => [...prevNames, name]);
+    setNamesList((prev) => [
+      ...prev,
+      {
+        id: Math.random().toString(),
+        name: name.trim(),
+      },
+    ]);
+
     setName("");
   }
-
+  function handleDeleteName(id: string): void {
+    setNamesList((prev) => prev.filter((item) => item.id !== id));
+  }
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome 👋</Text>
-      <Text style={styles.subtitle}>Start building your app</Text>
-      <StatusBar style="light" />
-      <View style={styles.formInput}>
-        <TextInput
-          placeholder="Enter your name"
-          style={styles.input}
-          value={name}
-          onChangeText={handleInputChange}
-        />
-        <Button title="Add Name" onPress={handleAddName} />
+      <StatusBar style="dark" />
+
+      <View style={styles.header}>
+        <Text style={styles.title}>My Names 👋</Text>
+        <Text style={styles.subtitle}>
+          Add and manage your names with a beautiful interface
+        </Text>
       </View>
 
-      <Text style={{ marginTop: 20, color: "#3f3f3f" }}>List of Names... </Text>
-      <View style={{ marginTop: 10 }}>
-        <ScrollView alwaysBounceVertical={false}>
-          {namesList.map((item, index) => (
-            <View
-              key={index}
-              style={{
-                padding: 10,
-                backgroundColor: "#4CAF50",
-                marginBottom: 5,
-              }}
-            >
-              <Text style={{ color: "#fff" }}>{item}</Text>
-            </View>
-          ))}
-        </ScrollView>
+      <NameInput
+        name={name}
+        onInputChange={handleInputChange}
+        onAddName={handleAddName}
+      />
+
+      <View style={styles.listSection}>
+        {namesList.length > 0 ? (
+          <>
+            <Text style={styles.listHeader}>Names ({namesList.length})</Text>
+            <FlatList
+              data={namesList}
+              keyExtractor={(item) => item.id}
+              alwaysBounceVertical={false}
+              scrollEnabled={false}
+              renderItem={({ item }) => (
+                <NameItems
+                  name={item.name}
+                  onDelete={() => handleDeleteName(item.id)}
+                />
+              )}
+            />
+          </>
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>
+              No names yet. Add one to get started! ✨
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -64,33 +82,42 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#e9e1e1",
+    backgroundColor: "#f8fafc",
+    paddingHorizontal: 16,
+    paddingTop: 20,
   },
-  formInput: {
-    display: "flex",
-    justifyContent: "space-between",
-    flexDirection: "row",
-    alignItems: "center",
+  header: {
+    marginBottom: 24,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "600",
-    color: "#fff",
+    fontSize: 32,
+    fontWeight: "700",
+    color: "#0f172a",
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
-    color: "#ddd",
-    marginBottom: 16,
+    fontSize: 15,
+    color: "#64748b",
+    lineHeight: 22,
   },
-  input: {
-    width: 200,
-    height: 40,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    marginBottom: 16,
-    backgroundColor: "#fff",
+  listSection: {
+    flex: 1,
+    marginTop: 24,
+  },
+  listHeader: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#0f172a",
+    marginBottom: 12,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#94a3b8",
   },
 });
